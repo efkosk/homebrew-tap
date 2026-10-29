@@ -1,0 +1,31 @@
+name: tests
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+permissions: {}
+
+defaults:
+  run:
+    shell: bash -xeuo pipefail {0}
+
+jobs:
+  cask:
+    runs-on: macos-26
+    permissions:
+      contents: read
+    steps:
+      - name: Set up Homebrew
+        uses: Homebrew/actions/setup-homebrew@eb02c69dbabdb66ff183c614f4ce7ab3c077592c # 2026.10.12.1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - run: brew style efkosk/tap/efclip
+      - run: brew audit --cask --online --strict efkosk/tap/efclip
+      - run: brew install --cask efkosk/tap/efclip
+      - run: test -d /Applications/EFClip.app
+      - run: brew uninstall --cask --zap efkosk/tap/efclip

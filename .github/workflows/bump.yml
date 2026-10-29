@@ -1,0 +1,41 @@
+# Each day reads the EFClip appcast (Sparkle) and, when a newer version is out,
+# rewrites version + sha256 in Casks/efclip.rb and pushes to main.
+name: bump efclip
+
+on:
+  schedule:
+    - cron: 17 */6 * * *
+  workflow_dispatch:
+
+permissions: {}
+
+defaults:
+  run:
+    shell: bash -xeuo pipefail {0}
+
+jobs:
+  bump:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Update cask from appcast
+        run: |
+          latest=$(curl -fsSL https://efclip.app/appcast.xml | python3 -c '
+          import sys, xml.etree.ElementTree as ET
+          ns = {"s": "http://www.andymatuschak.org/xml-namespaces/sparkle"}
+          items = ET.parse(sys.stdin).getroot().findall("channel/item")
+          top = max(items, key=lambda i: int(i.find("s:version", ns).text))
+          print(top.find("s:shortVersionString", ns).text)')
+          current=$(sed -nE 's/^  version "(.*)"$/\1/p' Casks/efclip.rb)
+          if [ "$latest" = "$current" ]; then exit 0; fi
+          curl -fsSLo efclip.dmg "https://cdn.efkey.app/efclip/EFClip-${latest}.dmg"
+          sha=$(sha256sum efclip.dmg | cut -d' ' -f1)
+          rm efclip.dmg
+          sed -i -E "s/^  version \".*\"$/  version \"${latest}\"/; s/^  sha256 \".*\"$/  sha256 \"${sha}\"/" Casks/efclip.rb
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -am "efclip ${latest}"
+          git push
