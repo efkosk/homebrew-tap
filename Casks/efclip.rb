@@ -1,6 +1,6 @@
 cask "efclip" do
-  version "1.0.3"
-  sha256 "2e0cc081a09ba78c1a5924d0166849a371957c6301c4569e46684f5228b5b0fa"
+  version "1.0.4"
+  sha256 "358d97d1e352a800cf1d634167dab7a8057e0bda8b93197500278ca14273bf44"
 
   url "https://cdn.efkey.app/efclip/EFClip-#{version}.dmg"
   name "EFClip"
